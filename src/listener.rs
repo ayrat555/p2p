@@ -1,35 +1,64 @@
 use crate::node::Node;
+use futures_util::TryStreamExt;
+use hyper::body;
+use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
-use std::io::prelude::*;
-use std::net::TcpListener;
-use std::net::TcpStream;
+use std::sync::{Arc, Mutex};
 
 pub struct Listener {
-    node: Node,
+    node: Arc<Mutex<Node>>,
 }
 
 impl Listener {
     pub fn new(node: Node) -> Self {
-        Listener { node }
+        Listener {
+            node: Arc::new(Mutex::new(node)),
+        }
     }
 
-    pub fn start(&self) {
-        let listener = TcpListener::bind(self.node.address()).unwrap();
+    pub async fn start_server(&'static self) -> Result<(), hyper::Error> {
+        let addr = self.node.lock().unwrap().address().parse().unwrap();
+        let service = make_service_fn(|_| async move {
+            Ok::<_, hyper::Error>(service_fn(move |req| process(req, self.node.clone())))
+        });
 
-        for stream in listener.incoming() {
-            let stream = stream.unwrap();
+        let server = Server::bind(&addr).serve(service);
 
-            handle_connection(stream);
-        }
+        server.await
     }
 }
 
-async fn process(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
+async fn process(
+    req: Request<Body>,
+    node: Arc<Mutex<Node>>,
+) -> Result<Response<Body>, hyper::Error> {
     match (req.method(), req.uri().path()) {
         // Serve some instructions at /
-        (&Method::GET, "/") => Ok(Response::new(Body::from(
-            "Try POSTing data to /echo such as: `curl localhost:3000/echo -XPOST -d 'hello world'`",
-        ))),
+        (&Method::GET, "/ping") => Ok(Response::new(Body::from("pong"))),
+
+        (&Method::POST, "/connect") => Ok(Response::new(Body::from("pong"))),
+
+        (&Method::POST, "/add_peer") => {
+            let bytes = body::to_bytes(req.into_body()).await?;
+            let potential_peer =
+                String::from_utf8(bytes.to_vec()).expect("response was not valid utf-8");
+
+            let mut unlocked_node = node.lock().unwrap();
+
+            if !unlocked_node.peer_exists(potential_peer.clone()) {
+                unlocked_node.add_peer(potential_peer);
+            }
+
+            println!("{:?}", unlocked_node);
+            //
+            log::error!("{:?}", node);
+
+            Ok(Response::new("ok".into()))
+        }
+
+        (&Method::GET, "/get_peers") => Ok(Response::new(Body::from("pong"))),
+
+        (&Method::GET, "/whisper") => Ok(Response::new(Body::from("pong"))),
 
         // Simply echo the body back to the client.
         (&Method::POST, "/echo") => Ok(Response::new(req.into_body())),

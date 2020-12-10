@@ -1,23 +1,22 @@
 use clap::Clap;
+use once_cell::sync::OnceCell;
 use p2p::cli_opts::CliOpts;
 use p2p::listener::Listener;
 use p2p::node::Node;
 
-fn main() {
+static INSTANCE: OnceCell<Listener> = OnceCell::new();
+
+#[tokio::main]
+async fn main() {
     let opts = CliOpts::parse();
-    let listener = create_listener(opts);
 
-    listener.start();
-
-    // println!("Period Value for config: {}", opts.period);
-    // println!("Port Value for config: {}", opts.port);
-    // println!("Connect Value for config: {:?}", opts.connect);
+    if let Err(error) = listener(opts).start_server().await {
+        log::error!("Failed to start server {:?}", error);
+    }
 }
 
-fn create_listener(opts: CliOpts) -> Listener {
-    let node = create_node(opts);
-
-    Listener::new(node)
+fn listener(opts: CliOpts) -> &'static Listener {
+    INSTANCE.get_or_init(|| Listener::new(create_node(opts)))
 }
 
 fn create_node(opts: CliOpts) -> Node {
