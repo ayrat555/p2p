@@ -3,6 +3,7 @@ use once_cell::sync::OnceCell;
 use p2p::cli_opts::CliOpts;
 use p2p::listener::Listener;
 use p2p::node::Node;
+use std::net::SocketAddr;
 
 static INSTANCE: OnceCell<Listener> = OnceCell::new();
 
@@ -20,7 +21,7 @@ fn listener(opts: CliOpts) -> &'static Listener {
 }
 
 fn create_node(opts: CliOpts) -> Node {
-    let address = format!("{}:{}", "127.0.0.1", opts.port);
+    let address: SocketAddr = format!("{}:{}", "127.0.0.1", opts.port).parse().unwrap();
 
     Node::new(address)
 }

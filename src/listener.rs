@@ -3,6 +3,7 @@ use futures_util::TryStreamExt;
 use hyper::body;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
+use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 
 pub struct Listener {
@@ -17,7 +18,7 @@ impl Listener {
     }
 
     pub async fn start_server(&'static self) -> Result<(), hyper::Error> {
-        let addr = self.node.lock().unwrap().address().parse().unwrap();
+        let addr = self.node.lock().unwrap().address;
         let service = make_service_fn(|_| async move {
             Ok::<_, hyper::Error>(service_fn(move |req| process(req, self.node.clone())))
         });
@@ -40,12 +41,12 @@ async fn process(
 
         (&Method::POST, "/add_peer") => {
             let bytes = body::to_bytes(req.into_body()).await?;
-            let potential_peer =
-                String::from_utf8(bytes.to_vec()).expect("response was not valid utf-8");
+            let potential_peer: SocketAddr =
+                String::from_utf8(bytes.to_vec()).unwrap().parse().unwrap();
 
             let mut unlocked_node = node.lock().unwrap();
 
-            if !unlocked_node.peer_exists(potential_peer.clone()) {
+            if !unlocked_node.peer_exists(&potential_peer) {
                 unlocked_node.add_peer(potential_peer);
             }
 
