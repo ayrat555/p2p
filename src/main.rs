@@ -1,27 +1,26 @@
 use clap::Clap;
 use once_cell::sync::OnceCell;
 use p2p::cli_opts::CliOpts;
+use p2p::create_node;
 use p2p::listener::Listener;
 use p2p::node::Node;
+use p2p::sync_job;
+use p2p::whisper_job;
 use std::net::SocketAddr;
-
-static INSTANCE: OnceCell<Listener> = OnceCell::new();
 
 #[tokio::main]
 async fn main() {
+    env_logger::init();
+
     let opts = CliOpts::parse();
+    create_new_node(&opts);
 
-    if let Err(error) = listener(opts).start_server().await {
-        log::error!("Failed to start server {:?}", error);
-    }
+    tokio::spawn(sync_job::sync_loop());
+    whisper_job::whisper_loop(opts.period).await
 }
 
-fn listener(opts: CliOpts) -> &'static Listener {
-    INSTANCE.get_or_init(|| Listener::new(create_node(opts)))
-}
-
-fn create_node(opts: CliOpts) -> Node {
+fn create_new_node(opts: &CliOpts) {
     let address: SocketAddr = format!("{}:{}", "127.0.0.1", opts.port).parse().unwrap();
 
-    Node::new(address)
+    create_node(address);
 }

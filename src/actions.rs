@@ -1,13 +1,13 @@
 use isahc::prelude::*;
 use std::time::Duration;
 
-mod add_peer;
-mod broadcast_peer;
-mod ping;
-mod return_peers;
-mod send_whisper;
-mod sync_peers;
-mod whisper;
+pub mod add_peer;
+pub mod broadcast_peer;
+pub mod ping;
+pub mod return_peers;
+pub mod send_whisper;
+pub mod sync_peers;
+pub mod whisper;
 
 #[derive(Debug, PartialEq)]
 pub struct Error {
