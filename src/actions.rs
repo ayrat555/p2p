@@ -4,6 +4,8 @@ use std::time::Duration;
 mod add_peer;
 mod broadcast_peer;
 mod ping;
+mod return_peers;
+mod sync_peers;
 
 #[derive(Debug, PartialEq)]
 pub struct Error {

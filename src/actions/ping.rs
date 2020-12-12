@@ -36,7 +36,7 @@ mod tests {
     fn call_returns_success() {
         let server = MockServer::start();
 
-        server.mock(|when, then| {
+        let mock = server.mock(|when, then| {
             when.method(GET).path("/ping");
             then.status(200)
                 .header("Content-Type", "text/html")
@@ -46,6 +46,7 @@ mod tests {
         let result = call(server.address());
 
         assert_eq!(Ok(()), result);
+        mock.assert();
     }
 
     #[test]

@@ -25,7 +25,7 @@ mod tests {
     #[test]
     fn call_returns_success() {
         let server = MockServer::start();
-        server.mock(|when, then| {
+        let mock = server.mock(|when, then| {
             when.method(GET).path("/ping");
             then.status(200)
                 .header("Content-Type", "text/html")
@@ -40,15 +40,16 @@ mod tests {
 
         let expected_result: Vec<SocketAddr> = vec![server.address().clone()];
         assert_eq!(expected_result, node.peers);
+        mock.assert();
     }
 
     #[test]
     fn call_fails_to_add_peer() {
-        let address: SocketAddr = "127.0.0.1:8080".parse().unwrap();
-        let address: SocketAddr = "127.0.0.1:8081".parse().unwrap();
-        let mut node = Node::new(address);
+        let address1: SocketAddr = "127.0.0.1:8080".parse().unwrap();
+        let address2: SocketAddr = "127.0.0.1:8081".parse().unwrap();
+        let mut node = Node::new(address1);
 
-        let result = call(&mut node, &address);
+        let result = call(&mut node, &address2);
 
         assert_eq!(
             Err(Error {
