@@ -3,6 +3,7 @@ use std::time::Duration;
 
 pub mod add_peer;
 pub mod broadcast_peer;
+pub mod connect;
 pub mod ping;
 pub mod return_peers;
 pub mod send_whisper;
