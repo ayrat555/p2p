@@ -5,7 +5,9 @@ mod add_peer;
 mod broadcast_peer;
 mod ping;
 mod return_peers;
+mod send_whisper;
 mod sync_peers;
+mod whisper;
 
 #[derive(Debug, PartialEq)]
 pub struct Error {

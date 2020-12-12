@@ -11,7 +11,7 @@ pub fn call(node: &mut Node, address: &SocketAddr) -> Result<(), Error> {
     for peer in &node.peers {
         let action_path = format!("http://{}/add_peer", peer.to_string());
 
-        match client.get(action_path) {
+        match client.post(action_path, address.to_string()) {
             Ok(response) => {
                 if response.status() != 200 {
                     nodes_to_remove.push(peer.clone())
@@ -34,6 +34,7 @@ mod tests {
     use super::call;
     use crate::node::Node;
     use httpmock::Method::GET;
+    use httpmock::Method::POST;
     use httpmock::MockServer;
     use std::net::SocketAddr;
 
@@ -49,7 +50,7 @@ mod tests {
 
         let old_peer_server = MockServer::start();
         let mock2 = old_peer_server.mock(|when, then| {
-            when.method(GET).path("/add_peer");
+            when.method(POST).path("/add_peer");
             then.status(200);
         });
 

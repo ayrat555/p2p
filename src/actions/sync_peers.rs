@@ -33,7 +33,13 @@ pub fn call(node: &mut Node) -> Result<(), Error> {
     }
 
     for peer in &nodes_to_add {
-        add_peer(node, peer);
+        if let Err(error) = add_peer(node, peer) {
+            log::debug!(
+                "Failed to add peer {} because of {:?}",
+                peer.to_string(),
+                error
+            );
+        }
     }
 
     Ok(())
