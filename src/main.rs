@@ -1,11 +1,8 @@
 use clap::Clap;
-use once_cell::sync::OnceCell;
 use p2p::actions::connect::call as connect;
 use p2p::cli_opts::CliOpts;
 use p2p::create_node;
-use p2p::listener::Listener;
 use p2p::node;
-use p2p::node::Node;
 use p2p::sync_job;
 use p2p::whisper_job;
 use std::net::SocketAddr;
@@ -24,7 +21,9 @@ async fn main() {
 }
 
 fn create_new_node(opts: &CliOpts) {
-    let address: SocketAddr = format!("{}:{}", "127.0.0.1", opts.port).parse().unwrap();
+    let address: SocketAddr = format!("{}:{}", "127.0.0.1", opts.port)
+        .parse()
+        .expect("Node address is not valid");
 
     create_node(address);
 }
@@ -32,7 +31,7 @@ fn create_new_node(opts: &CliOpts) {
 fn maybe_connect_to_bootnode(opts: &CliOpts) {
     match &opts.connect {
         Some(address_str) => {
-            let address: SocketAddr = address_str.parse().unwrap();
+            let address: SocketAddr = address_str.parse().expect("Bootnode address is not valid");
             let mut node = node().lock().unwrap();
             if let Err(error) = connect(&mut node, &address) {
                 log::error!("Failed to connect to bootnode {:?}", error);

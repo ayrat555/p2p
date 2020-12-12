@@ -1,7 +1,8 @@
 use crate::node::Node;
 
-pub fn call(node: Node) -> String {
+pub fn call(node: &Node) -> String {
     node.peers
+        .clone()
         .into_iter()
         .map(|peer| peer.to_string())
         .collect::<Vec<String>>()
@@ -24,7 +25,7 @@ mod tests {
             peers: vec![peer_address1.clone(), peer_address2.clone()],
         };
 
-        let result = call(node);
+        let result = call(&node);
 
         assert_eq!("127.0.0.1:8081,127.0.0.1:8082".to_string(), result);
     }
