@@ -4,14 +4,13 @@ use crate::node::Node;
 use std::net::SocketAddr;
 
 pub fn call(node: &mut Node) -> Result<(), Error> {
-    let client = actions::client();
+    let client = actions::client(&node.address);
     let mut nodes_to_remove: Vec<SocketAddr> = vec![];
-    let message = format!("hello from {}", node.address.to_string());
 
     for peer in &node.peers {
         let action_path = format!("http://{}/whisper", peer.to_string());
 
-        match client.post(action_path, message.clone()) {
+        match client.post(action_path, "hello") {
             Ok(response) => {
                 if response.status() != 200 {
                     nodes_to_remove.push(peer.clone())

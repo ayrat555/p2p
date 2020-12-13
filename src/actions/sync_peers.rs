@@ -6,7 +6,7 @@ use isahc::ResponseExt;
 use std::net::SocketAddr;
 
 pub fn call(node: &mut Node) -> Result<(), Error> {
-    let client = actions::client();
+    let client = actions::client(&node.address);
     let mut nodes_to_remove: Vec<SocketAddr> = vec![];
     let mut nodes_to_add: Vec<SocketAddr> = vec![];
 

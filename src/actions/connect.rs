@@ -6,7 +6,7 @@ use crate::node::Node;
 use std::net::SocketAddr;
 
 pub fn call(node: &mut Node, address: &SocketAddr) -> Result<(), Error> {
-    let client = actions::client();
+    let client = actions::client(&node.address);
 
     let action_path = format!("http://{}/connect", address.to_string());
 

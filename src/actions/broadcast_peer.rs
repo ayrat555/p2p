@@ -5,7 +5,7 @@ use crate::node::Node;
 use std::net::SocketAddr;
 
 pub fn call(node: &mut Node, address: &SocketAddr) -> Result<(), Error> {
-    let client = actions::client();
+    let client = actions::client(&node.address);
     let mut nodes_to_remove: Vec<SocketAddr> = vec![];
 
     for peer in &node.peers {

@@ -1,5 +1,4 @@
 use crate::actions::send_whisper::call as send_whisper;
-use crate::node;
 use crate::node::Node;
 use std::sync::{Arc, Mutex};
 use tokio::time;

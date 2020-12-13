@@ -4,7 +4,7 @@ use crate::node::Node;
 use std::net::SocketAddr;
 
 pub fn call(node: &mut Node, address: &SocketAddr) -> Result<(), Error> {
-    ping(&address)?;
+    ping(node, &address)?;
 
     if !node.peer_exists(address) {
         node.add_peer(address.clone());

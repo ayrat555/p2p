@@ -1,5 +1,4 @@
 use crate::actions::sync_peers::call as sync_peers;
-use crate::node;
 use crate::node::Node;
 use std::sync::{Arc, Mutex};
 use tokio::time;

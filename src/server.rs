@@ -2,23 +2,17 @@ use crate::actions::add_peer::call as add_peer;
 use crate::actions::broadcast_peer::call as broadcast_peer;
 use crate::actions::return_peers::call as return_peers;
 use crate::actions::whisper::call as whisper;
-use crate::node;
 use crate::node::Node;
 use hyper::body;
-use hyper::server::conn::AddrStream;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 
 pub async fn start_server(node: Arc<Mutex<Node>>, address: SocketAddr) -> Result<(), hyper::Error> {
-    let service = make_service_fn(move |conn: &AddrStream| {
-        let addr = conn.remote_addr();
+    let service = make_service_fn(move |_| {
         let node = node.clone();
-        async move {
-            let addr = addr.clone();
-            Ok::<_, hyper::Error>(service_fn(move |req| process(req, addr, node.clone())))
-        }
+        async move { Ok::<_, hyper::Error>(service_fn(move |req| process(req, node.clone()))) }
     });
 
     let server = Server::bind(&address).serve(service);
@@ -29,7 +23,6 @@ pub async fn start_server(node: Arc<Mutex<Node>>, address: SocketAddr) -> Result
 
 async fn process(
     req: Request<Body>,
-    address: SocketAddr,
     node: Arc<Mutex<Node>>,
 ) -> Result<Response<Body>, hyper::Error> {
     match (req.method(), req.uri().path()) {
@@ -73,7 +66,14 @@ async fn process(
             Ok(Response::new(Body::from(peers_response)))
         }
 
-        (&Method::GET, "/whisper") => {
+        (&Method::POST, "/whisper") => {
+            let address = req
+                .headers()
+                .get("NODE")
+                .and_then(|val| val.to_str().ok())
+                .and_then(|s| s.parse::<SocketAddr>().ok())
+                .unwrap();
+
             let bytes = body::to_bytes(req.into_body()).await?;
             let message: String = String::from_utf8(bytes.to_vec()).unwrap();
 
@@ -104,12 +104,12 @@ fn error_status() -> Result<Response<Body>, hyper::Error> {
 
 #[cfg(test)]
 mod tests {
-    use super::node::Node;
     use super::start_server;
-    use crate::actions::client;
+    use crate::node::Node;
     use httpmock::Method::GET;
     use httpmock::Method::POST;
     use httpmock::MockServer;
+    use isahc::prelude::*;
     use isahc::ResponseExt;
     use std::net::SocketAddr;
     use std::sync::{Arc, Mutex};
@@ -264,8 +264,17 @@ mod tests {
         tokio_runtime.spawn(start_server(node.clone(), node_address.clone()));
 
         let action_path = format!("http://{}/whisper", node_address);
-        let response = client().get(action_path).unwrap();
+        let response = HttpClient::builder()
+            .default_header("NODE", node_address.to_string())
+            .build()
+            .unwrap()
+            .post(action_path, "hey")
+            .unwrap();
 
         assert_eq!(response.status(), 200);
+    }
+
+    fn client() -> HttpClient {
+        HttpClient::builder().build().unwrap()
     }
 }

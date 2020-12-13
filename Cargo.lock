@@ -1186,7 +1186,6 @@ dependencies = [
  "hyper",
  "isahc",
  "log",
- "once_cell",
  "tokio",
 ]
 

@@ -1,10 +1,11 @@
 use crate::actions;
 use crate::actions::Error;
+use crate::node::Node;
 use isahc::ResponseExt;
 use std::net::SocketAddr;
 
-pub fn call(address: &SocketAddr) -> Result<(), Error> {
-    let client = actions::client();
+pub fn call(node: &Node, address: &SocketAddr) -> Result<(), Error> {
+    let client = actions::client(&node.address);
     let action_path = format!("http://{}/ping", address.to_string());
 
     match client.get(action_path) {
@@ -28,6 +29,7 @@ pub fn call(address: &SocketAddr) -> Result<(), Error> {
 mod tests {
     use super::call;
     use crate::actions::Error;
+    use crate::node::Node;
     use httpmock::Method::GET;
     use httpmock::MockServer;
     use std::net::SocketAddr;
@@ -43,7 +45,10 @@ mod tests {
                 .body("pong");
         });
 
-        let result = call(server.address());
+        let address: SocketAddr = "127.0.0.1:8080".parse().unwrap();
+        let node = Node::new(address);
+
+        let result = call(&node, server.address());
 
         assert_eq!(Ok(()), result);
         mock.assert();
@@ -52,7 +57,9 @@ mod tests {
     #[test]
     fn call_returns_failure_if_address_is_not_available() {
         let address: SocketAddr = "127.0.0.1:8080".parse().unwrap();
-        let result = call(&address);
+        let node_address: SocketAddr = "127.0.0.1:8081".parse().unwrap();
+        let node = Node::new(node_address);
+        let result = call(&node, &address);
 
         assert_eq!(
             Err(Error {

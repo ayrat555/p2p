@@ -2,7 +2,6 @@ use crate::node::Node;
 use clap::Clap;
 use p2p::actions::connect::call as connect;
 use p2p::cli_opts::CliOpts;
-use p2p::create_node;
 use p2p::node;
 use p2p::server;
 use p2p::sync_job;
@@ -41,9 +40,10 @@ fn create_new_node(opts: &CliOpts) -> Node {
 async fn maybe_connect_to_bootnode(node: Arc<Mutex<Node>>, opts: &CliOpts) {
     match &opts.connect {
         Some(address_str) => {
+            let address: SocketAddr = address_str.parse().expect("Bootnode address is not valid");
+            //let's give our server some time to boot
             time::delay_for(Duration::from_secs(5)).await;
 
-            let address: SocketAddr = address_str.parse().expect("Bootnode address is not valid");
             let mut node = node.lock().unwrap();
             if let Err(error) = connect(&mut node, &address) {
                 log::error!("Failed to connect to bootnode {:?}", error);
