@@ -1,19 +1,21 @@
 use crate::actions::sync_peers::call as sync_peers;
 use crate::node;
+use crate::node::Node;
+use std::sync::{Arc, Mutex};
 use tokio::time;
 
-pub async fn sync_loop() {
+pub async fn sync_loop(node: Arc<Mutex<Node>>) {
     let mut interval = time::interval(std::time::Duration::from_secs(10));
 
     loop {
         interval.tick().await;
 
-        sync();
+        sync(node.clone());
     }
 }
 
-fn sync() {
-    let mut node = node().lock().unwrap();
+fn sync(node: Arc<Mutex<Node>>) {
+    let mut node = node.lock().unwrap();
 
     log::debug!("Started syncing");
 
